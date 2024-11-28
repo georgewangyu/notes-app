@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import { Mic, List, Grid, Plus, Search } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import NoteForm from "./NoteForm";
 
 interface Category {
   name: string;
@@ -22,100 +24,62 @@ interface Note {
   borderColor: string;
 }
 
+interface NoteFormData {
+  title: string;
+  content: string;
+  category: string;
+  authors: string;
+}
+
+interface QueueItem {
+  id: number;
+  title: string;
+  category: string;
+  status: string;
+  date: string;
+}
+
 const NotesApp = () => {
   const [view, setView] = useState<'list' | 'grid'>('list');
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [queueItems, setQueueItems] = useState<QueueItem[]>([]);
+
+  const handleAddNote = (data: NoteFormData) => {
+    const newNote: Note = {
+      id: notes.length + 1,
+      title: data.title,
+      category: data.category,
+      date: new Date().getFullYear().toString(),
+      authors: data.authors,
+      color: categories.find(c => c.name === data.category)?.color || 'bg-gray-50',
+      borderColor: categories.find(c => c.name === data.category)?.accentColor || 'border-l-4 border-l-gray-500'
+    };
+
+    setNotes([...notes, newNote]);
+  };
+
+  const handleAddCategory = () => {
+    const newCategory: Category = {
+      name: "New Category",
+      count: 0,
+      color: "bg-gray-100",
+      textColor: "text-gray-800",
+      accentColor: "border-l-gray-500"
+    };
+    setCategories([...categories, newCategory]);
+  };
   
-  const [categories] = useState<Category[]>([
-    { 
-      name: 'Machine learning', 
-      count: 31, 
-      color: 'bg-purple-100', 
-      textColor: 'text-purple-800', 
-      accentColor: 'border-l-purple-500' 
-    },
-    { 
-      name: 'Computer science', 
-      count: 23, 
-      color: 'bg-blue-100', 
-      textColor: 'text-blue-800', 
-      accentColor: 'border-l-blue-500' 
-    },
-    { 
-      name: 'Psychology', 
-      count: 18, 
-      color: 'bg-yellow-100', 
-      textColor: 'text-yellow-800', 
-      accentColor: 'border-l-yellow-500' 
-    },
-    { 
-      name: 'Economics', 
-      count: 11, 
-      color: 'bg-violet-100', 
-      textColor: 'text-violet-800', 
-      accentColor: 'border-l-violet-500' 
-    },
-    { 
-      name: 'LLMs', 
-      count: 9, 
-      color: 'bg-green-100', 
-      textColor: 'text-green-800', 
-      accentColor: 'border-l-green-500' 
-    }
-  ]);
-
-  const [notes] = useState<Note[]>([
-    {
-      id: 1,
-      title: 'Keeping neural networks simple by minimizing the description length of the weights',
-      category: 'Machine learning',
-      date: '2024',
-      authors: 'Geoffrey E. Hinton, Drew van Camp',
-      color: 'bg-blue-50',
-      borderColor: 'border-l-4 border-l-blue-500'
-    },
-    {
-      id: 2,
-      title: 'Exploring Scaling Trends in LLM Robustness',
-      category: 'LLMs',
-      date: '2024',
-      authors: 'Nikolhaus Howe, Michal Zajac, Ian McKenzie',
-      color: 'bg-green-50',
-      borderColor: 'border-l-4 border-l-green-500'
-    },
-    {
-      id: 3,
-      title: 'VGGHeads: A Large-Scale Synthetic Dataset for 3D Human Heads',
-      category: 'Machine learning',
-      date: '2024',
-      authors: 'Orest Kupyn, Eugene Khvedchenia, Christian Rupprecht',
-      color: 'bg-purple-50',
-      borderColor: 'border-l-4 border-l-purple-500'
-    }
-  ]);
-
-  const [queueItems] = useState([
-    {
-      id: 1,
-      title: "Alan Kay's Universal Media Machine",
-      category: "Computer science",
+  const handleAddToQueue = (note: Note) => {
+    const newQueueItem: QueueItem = {
+      id: queueItems.length + 1,
+      title: note.title,
+      category: note.category,
       status: "NEW",
-      date: "2024"
-    },
-    {
-      id: 2,
-      title: "Order Matters: Sequence to sequence for sets",
-      category: "Machine learning",
-      status: "NEW",
-      date: "2024"
-    },
-    {
-      id: 3,
-      title: "The Llama 3 Herd of Models",
-      category: "LLMs",
-      status: "NEW",
-      date: "2024"
-    }
-  ]);
+      date: new Date().getFullYear().toString()
+    };
+    setQueueItems([...queueItems, newQueueItem]);
+  };
 
   return (
     <div className="min-h-screen bg-[#F5F1EA]">
@@ -131,10 +95,23 @@ const NotesApp = () => {
             <button className="p-2 rounded-full hover:bg-gray-200/50">
               <Mic className="w-5 h-5 text-gray-600" />
             </button>
-            <button className="flex items-center space-x-2 px-4 py-2 rounded-full bg-green-50 text-green-600 hover:bg-green-100 border border-green-200">
-              <Plus className="w-4 h-4" />
-              <span>Add item</span>
-            </button>
+            <Dialog>
+              <DialogTrigger asChild>
+                <button className="flex items-center space-x-2 px-4 py-2 rounded-full bg-green-50 text-green-600 hover:bg-green-100 border border-green-200">
+                  <Plus className="w-4 h-4" />
+                  <span>Add item</span>
+                </button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add New Note</DialogTitle>
+                </DialogHeader>
+                <NoteForm 
+                  categories={categories} 
+                  onSubmit={handleAddNote} 
+                />
+              </DialogContent>
+            </Dialog>
           </div>
         </header>
 
@@ -185,43 +162,47 @@ const NotesApp = () => {
             </div>
 
             {/* Continue Section */}
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold text-gray-800 mb-3">Continue</h2>
-              <div className={`grid ${view === 'grid' ? 'grid-cols-3' : 'grid-cols-1'} gap-4`}>
-                {notes.map((note) => (
-                  <Card 
-                    key={note.id} 
-                    className={`${note.color} border-0 ${note.borderColor} shadow-sm hover:shadow-md transition-shadow duration-200`}
-                  >
-                    <CardContent className="p-4">
-                      <div className="text-sm text-gray-500 mb-2">
-                        {note.date} • {note.category}
-                      </div>
-                      <h3 className="font-semibold mb-2 text-gray-800">{note.title}</h3>
-                      <div className="text-sm text-gray-600">{note.authors}</div>
-                    </CardContent>
-                  </Card>
-                ))}
+            {notes.length > 0 && (
+              <div className="mb-6">
+                <h2 className="text-lg font-semibold text-gray-800 mb-3">Continue</h2>
+                <div className={`grid ${view === 'grid' ? 'grid-cols-3' : 'grid-cols-1'} gap-4`}>
+                  {notes.map((note) => (
+                    <Card 
+                      key={note.id} 
+                      className={`${note.color} border-0 ${note.borderColor} shadow-sm hover:shadow-md transition-shadow duration-200`}
+                    >
+                      <CardContent className="p-4">
+                        <div className="text-sm text-gray-500 mb-2">
+                          {note.date} • {note.category}
+                        </div>
+                        <h3 className="font-semibold mb-2 text-gray-800">{note.title}</h3>
+                        <div className="text-sm text-gray-600">{note.authors}</div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Queue Section */}
-            <div>
-              <h2 className="text-lg font-semibold text-gray-800 mb-3">Your queue</h2>
-              <div className="space-y-2">
-                {queueItems.map((item, index) => (
-                  <div key={item.id} className="flex items-center space-x-4 p-3 bg-white/80 rounded-lg">
-                    <span className="w-6 h-6 flex items-center justify-center bg-gray-100 rounded-full text-sm text-gray-600">
-                      {index + 1}
-                    </span>
-                    <div className="flex-1">
-                      <h4 className="font-medium text-gray-800">{item.title}</h4>
-                      <p className="text-sm text-gray-500">{item.category} • {item.status} • {item.date}</p>
+            {queueItems.length > 0 && (
+              <div>
+                <h2 className="text-lg font-semibold text-gray-800 mb-3">Your queue</h2>
+                <div className="space-y-2">
+                  {queueItems.map((item, index) => (
+                    <div key={item.id} className="flex items-center space-x-4 p-3 bg-white/80 rounded-lg">
+                      <span className="w-6 h-6 flex items-center justify-center bg-gray-100 rounded-full text-sm text-gray-600">
+                        {index + 1}
+                      </span>
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-800">{item.title}</h4>
+                        <p className="text-sm text-gray-500">{item.category} • {item.status} • {item.date}</p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </main>
         </div>
       </div>
