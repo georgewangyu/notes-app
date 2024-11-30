@@ -12,6 +12,14 @@ import {
 } from "@/components/ui/dialog";
 import NoteForm from "./NoteForm";
 import { Note, subscribeToNotes, addNote } from "@/lib/firebaseutils";
+import { MoreVertical, Pencil, Trash } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { deleteNote, updateNote } from "@/lib/firebaseutils";
 
 interface Category {
   name: string;
@@ -41,6 +49,8 @@ const NotesApp = () => {
     },
     // ... other categories
   ]);
+  const [editingNote, setEditingNote] = useState<Note | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   // Subscribe to real-time updates
   useEffect(() => {
@@ -72,6 +82,20 @@ const NotesApp = () => {
       console.error("Error adding note:", error);
       // You might want to show an error message to the user
     }
+  };
+
+  const handleDeleteNote = async (noteId: string) => {
+    try {
+      await deleteNote(noteId);
+      // Firebase subscription will automatically update the UI
+    } catch (error) {
+      console.error("Error deleting note:", error);
+    }
+  };
+
+  const handleEditNote = (note: Note) => {
+    setEditingNote(note);
+    setIsEditDialogOpen(true);
   };
 
   return (
@@ -177,14 +201,38 @@ const NotesApp = () => {
                       className={`${note.color} border-0 ${note.borderColor} shadow-sm hover:shadow-md transition-shadow duration-200`}
                     >
                       <CardContent className="p-4">
-                        <div className="text-sm text-gray-500 mb-2">
-                          {note.date} • {note.category}
-                        </div>
-                        <h3 className="font-semibold mb-2 text-gray-800">
-                          {note.title}
-                        </h3>
-                        <div className="text-sm text-gray-600">
-                          {note.authors}
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <div className="text-sm text-gray-500 mb-2">
+                              {note.date} • {note.category}
+                            </div>
+                            <h3 className="font-semibold mb-2 text-gray-800">
+                              {note.title}
+                            </h3>
+                            <div className="text-sm text-gray-600">
+                              {note.authors}
+                            </div>
+                          </div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger className="p-2 hover:bg-black/5 rounded-full">
+                              <MoreVertical className="h-4 w-4 text-gray-500" />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={() => handleEditNote(note)}
+                              >
+                                <Pencil className="h-4 w-4 mr-2" />
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="text-red-600"
+                                onClick={() => handleDeleteNote(note.id)}
+                              >
+                                <Trash className="h-4 w-4 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </CardContent>
                     </Card>
@@ -200,6 +248,35 @@ const NotesApp = () => {
           </main>
         </div>
       </div>
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Note</DialogTitle>
+          </DialogHeader>
+          <NoteForm
+            categories={categories}
+            onSubmit={async (data) => {
+              if (editingNote) {
+                try {
+                  await updateNote(editingNote.id, {
+                    ...data,
+                    color:
+                      categories.find((c) => c.name === data.category)?.color ||
+                      "bg-gray-50",
+                    borderColor:
+                      categories.find((c) => c.name === data.category)
+                        ?.accentColor || "border-l-4 border-l-gray-500",
+                  });
+                  setIsEditDialogOpen(false);
+                } catch (error) {
+                  console.error("Error updating note:", error);
+                }
+              }
+            }}
+            initialData={editingNote || undefined}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

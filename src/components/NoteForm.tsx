@@ -1,6 +1,6 @@
-'use client'
+"use client";
 
-import React from 'react';
+import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -27,12 +27,19 @@ interface NoteFormProps {
 const NoteForm = ({ categories, onSubmit, initialData }: NoteFormProps) => {
   const form = useForm<NoteFormData>({
     defaultValues: initialData || {
-      title: '',
-      content: '',
-      category: '',
-      authors: ''
+      title: "",
+      content: "",
+      category: "",
+      authors: "",
     },
   });
+
+  // Reset form when initialData changes (when editing different notes)
+  useEffect(() => {
+    if (initialData) {
+      form.reset(initialData);
+    }
+  }, [initialData, form]);
 
   return (
     <Form {...form}>
@@ -58,10 +65,10 @@ const NoteForm = ({ categories, onSubmit, initialData }: NoteFormProps) => {
             <FormItem>
               <FormLabel>Content</FormLabel>
               <FormControl>
-                <Textarea 
-                  placeholder="Write your note content here..." 
+                <Textarea
+                  placeholder="Write your note content here..."
+                  className="min-h-[100px]"
                   {...field}
-                  className="h-32"
                 />
               </FormControl>
               <FormMessage />
@@ -108,7 +115,9 @@ const NoteForm = ({ categories, onSubmit, initialData }: NoteFormProps) => {
           )}
         />
 
-        <Button type="submit">Save Note</Button>
+        <Button type="submit" className="w-full">
+          {initialData ? "Update Note" : "Create Note"}
+        </Button>
       </form>
     </Form>
   );
