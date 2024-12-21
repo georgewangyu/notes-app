@@ -51,6 +51,7 @@ const NotesApp = () => {
   ]);
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
   // Subscribe to real-time updates
   useEffect(() => {
@@ -77,10 +78,9 @@ const NotesApp = () => {
           categoryInfo?.accentColor || "border-l-4 border-l-gray-500",
       });
 
-      // No need to setNotes here as the real-time subscription will update it
+      setIsAddDialogOpen(false); // Close dialog after successful creation
     } catch (error) {
       console.error("Error adding note:", error);
-      // You might want to show an error message to the user
     }
   };
 
@@ -112,7 +112,7 @@ const NotesApp = () => {
             <button className="p-2 rounded-full hover:bg-gray-200/50">
               <Mic className="w-5 h-5 text-gray-600" />
             </button>
-            <Dialog>
+            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
                 <button className="flex items-center space-x-2 px-4 py-2 rounded-full bg-green-50 text-green-600 hover:bg-green-100 border border-green-200">
                   <Plus className="w-4 h-4" />
